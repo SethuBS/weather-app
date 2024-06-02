@@ -2,43 +2,49 @@ package com.example.weatherapp.service;
 
 import com.example.weatherapp.model.WeatherData;
 import com.example.weatherapp.model.WeatherDay;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 
 @Getter
-@AllArgsConstructor
 @Service
 public class WeatherService {
 
-    private WeatherData weatherData;
+    private final WeatherData weatherData;
 
-    @PostConstruct
-    public void init() throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        this.weatherData = mapper.readValue(new File("src/main/resources/static/weather_results.json"), WeatherData.class);
-    }
-
-    public List<Integer> getHighTemperatures() {
-        return weatherData.getDays().values().stream().map(WeatherDay::getHigh).collect(Collectors.toList());
-    }
-
-    public List<Integer> getLowTemperatures() {
-        return weatherData.getDays().values().stream().map(WeatherDay::getLow).collect(Collectors.toList());
+    @Autowired
+    public WeatherService(WeatherData weatherData) {
+        this.weatherData = weatherData;
     }
 
     public double getAverageHighTemperature() {
-        return getHighTemperatures().stream().mapToInt(Integer::intValue).average().orElse(0.0);
+        return weatherData.getDays().values().stream()
+                .mapToInt(WeatherDay::getHigh)
+                .average()
+                .orElse(0);
     }
 
     public double getAverageLowTemperature() {
-        return getLowTemperatures().stream().mapToInt(Integer::intValue).average().orElse(0.0);
+        return weatherData.getDays().values().stream()
+                .mapToInt(WeatherDay::getLow)
+                .average()
+                .orElse(0);
+    }
+
+    public List<Integer> getMissingTemperatures() {
+        int min = weatherData.getDays().values().stream()
+                .mapToInt(WeatherDay::getLow)
+                .min()
+                .orElse(0);
+        int max = weatherData.getDays().values().stream()
+                .mapToInt(WeatherDay::getHigh)
+                .max()
+                .orElse(0);
+        return Stream.of(min, max).filter(t -> false).collect(Collectors.toList());
     }
 }

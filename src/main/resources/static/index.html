@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Report</title>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f0f0f0;
+            color: #333;
+        }
+        #weather-report {
+            background: #fff;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #007BFF;
+        }
+        h3 {
+            margin-top: 20px;
+            color: #333;
+        }
+        p {
+            margin: 10px 0;
+        }
+        img {
+            width: 50px;
+            height: auto;
+            vertical-align: middle;
+        }
+        #temperature-chart {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<div id="weather-report"></div>
+<div id="temperature-chart"></div>
+
+<script>
+    fetch('/weather')
+        .then(response => response.json())
+        .then(data => {
+            let reportHtml = '<h1>Weather Report for ' + data.details.location + '</h1>';
+            reportHtml += '<p>Last Modified: ' + data.details.lastModified + '</p>';
+
+            const days = ['day1', 'day2', 'day3', 'day4', 'day5'];
+            days.forEach(day => {
+                const dayData = data.days[day];
+                reportHtml += '<h3>' + day + '</h3>';
+                reportHtml += '<p>High: ' + dayData.high + '°C, Low: ' + dayData.low + '°C</p>';
+                let imgSrc = '';
+                switch (dayData.condition) {
+                    case 'Clear':
+                        imgSrc = 'sun.png';
+                        break;
+                    case 'Partly Cloudy':
+                        imgSrc = 'cloud.png';
+                        break;
+                }
+                reportHtml += '<p><img src="' + imgSrc + '" alt="' + dayData.condition + '"> ' + dayData.condition + '</p>';
+            });
+
+            document.getElementById('weather-report').innerHTML = reportHtml;
+
+            const highTemps = days.map(day => data.days[day].high);
+            const lowTemps = days.map(day => data.days[day].low);
+
+            Highcharts.chart('temperature-chart', {
+                title: { text: 'Weekly Temperature' },
+                xAxis: { categories: days },
+                yAxis: { title: { text: 'Temperature (°C)' } },
+                series: [
+                    { name: 'High', data: highTemps },
+                    { name: 'Low', data: lowTemps }
+                ]
+            });
+        });
+</script>
+</body>
+</html>
